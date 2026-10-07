@@ -12,6 +12,8 @@ import { BrowserRouter, Routes,Route, Navigate } from 'react-router-dom';
 // import AppNavbar from './components/NavBar';
 import MainLayout from './pages/MainLayout';
 import ListUser from './pages/user/list';
+import CategoryPage from './pages/category page/category';
+import ProductsPage from './pages/product page/product';
 
 
 function App() {
@@ -97,6 +99,8 @@ return (
       <Route element={<MainLayout/>}>
         <Route path="/dashboard" element={<Dashboard />}></Route>
         <Route path="/user" element={<ListUser />}></Route>
+        <Route path="/categories" element={<CategoryPage />}></Route>
+        <Route path="/product" element={<ProductsPage />}></Route>
       </Route>
     </Routes>
   </BrowserRouter>

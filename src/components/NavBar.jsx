@@ -10,7 +10,8 @@ export default function AppNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <Nav.Link href="/dashboard">Home</Nav.Link>
-            <Nav.Link href="#link">Link</Nav.Link>
+            <Nav.Link href="/categories">Categories</Nav.Link>
+            <Nav.Link href="/product">Product</Nav.Link>
           </Nav>
           <Nav className="align-items-center  gap-2">
             <NavDropdown title="Dropdown" id="basic-nav-dropdown">
