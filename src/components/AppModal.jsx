@@ -18,10 +18,10 @@ export default function AppModal({show, onClose, size="md", title, children, onS
     <DialogContent className="sm:max-w [540px]">
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>
+        {/* <DialogDescription>
           This action cannot be undone. This will permanently delete your account
           and remove your data from our servers.
-        </DialogDescription>
+        </DialogDescription> */}
       </DialogHeader>
       <form onSubmit={onSubmit}>
         <div className="py-2">{children}</div>

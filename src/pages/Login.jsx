@@ -8,6 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert";
+import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
 import { Coffee, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +28,8 @@ export default function Login() {
 
   const [formData, setFormData] = useState(_initialForm);
   const [isLoading, setIsLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
   // const [email, setEmail] = useState("")
   // const [password, setPassword] = useState("")
 
@@ -35,14 +43,35 @@ export default function Login() {
     }));
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true); //loading
-    setTimeout(() => {
+    setSuccessMsg("");
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+      const result = await res.json();
+      if (!res.ok) {
+        throw new Error(result.message || "Please check your email and password");
+      }
+      setSuccessMsg(result.message);
+      localStorage.setItem("token", result.data.token);
+      setTimeout(() => {
+        // alert("Duarrr Nmek");
+        navigate("/dashboard");
+      }, 2000);
+    } catch (error) {
+      setErrorMsg(error.message);
+      console.log(error.message);
+    } finally {
       setIsLoading(false);
-      // alert("Duarrr Nmek");
-      navigate("/Dashboard");
-    }, 1000);
+    }
   };
 
   const [showPassword, setShowPassword] = useState(false);
@@ -65,6 +94,31 @@ export default function Login() {
               Sign In Your Account
             </CardTitle>
             <CardDescription>Enter Your credential</CardDescription>
+            {errorMsg &&
+            <Alert className="max-w-md text-center border-red-500 bg-red-200 text-amber-900 shadow-lg">
+              <div className="flex items-center justify-center">
+              <AlertCircleIcon className="justify-center mr-2"/>
+              <AlertTitle>Login Failed</AlertTitle>
+              </div>
+              <AlertDescription className="text-amber-900">
+                {errorMsg}
+              </AlertDescription>
+            </Alert>
+            }
+
+            {successMsg && (
+              <Alert 
+                className="max-w-md text-center border-emerald-200 bg-emerald-200 text-emerald-900 shadow-lg">
+                <div className="flex items-center justify-center">
+                  <AlertCircleIcon className="justify-center mr-2"/>
+                  <AlertTitle>Login Success</AlertTitle>
+                </div>
+                <AlertDescription className="text-emerald-900">
+                  {successMsg}
+                </AlertDescription>
+              </Alert>
+            )}
+          
           </CardHeader>
 
           <form onSubmit={handleLogin}>

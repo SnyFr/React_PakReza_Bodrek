@@ -8,6 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import AppModal from "../../components/AppModal";
 
@@ -98,16 +100,16 @@ export default function ListUser() {
 
   return (
     <>
-      <Card className="shadow-sm border-0">
-        <CardContent className="p-0">
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <div>
-              <h4 className="mb-0 fw-bold">Data User</h4>
-            </div>
-            <Button variant="primary" onClick={handleOpenModal}>
+      <Card className="shadow-sm border-border">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+          <div>
+            <CardTitle className="text-xl font-bold">Data User</CardTitle>
+          </div>
+            <Button onClick={handleOpenModal}>
               Create New User
             </Button>
-          </div>
+        </CardHeader>
+        <CardContent className="p-0">
           <table className="w-full text-left text-sm">
             <thead className="border-y bg-muted/30 text-xs uppercase text-muted-foreground">
               <tr>
@@ -121,24 +123,24 @@ export default function ListUser() {
             <tbody className="divide-y divide-border">
               {users.map((user, index) => (
                 <tr key={index} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-4 py-6 whitespace-nowrap">{index + 1}</td>
-                  <td>{user.name}</td>
+                  <td className="px-6 py-6 whitespace-nowrap">{index + 1}</td>
+                  <td className="px-6">{user.name}</td>
                   <td>{user.email}</td>
-                  <td>{user.status}</td>
-                  <td className="px-4 py-6 text-right whitespace-nowrap">
+                  <td className="px-6">Active</td>
+                  <td className="px-6 py-6 whitespace-nowrap">
                     <Button
                       onClick={() => handleEditModal(user)}
-                      variant="warning"
+                      variant="secondary"
                       size="sm"
-                      className="me-2"
+                      className="me-2 rounded-lg"
                     >
                       Edit
                     </Button>
                     <Button
                       onClick={() => handleDelete(user.id)}
-                      variant="danger"
+                      variant="destructive"
                       size="sm"
-                      className="me-2"
+                      className="me-2 rounded-lg"
                     >
                       Delete
                     </Button>
@@ -218,6 +220,23 @@ export default function ListUser() {
         onSubmit={handleSubmit}
         submitLabel={isEdit ? "Save Changes" : "Save"}
       >
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label>Name</Label>
+                <Input id="name" name="name" value={formData.name} onChange={handleChange} required placeholder="nameexample" />
+            </div>
+            <div className="space-y-2">
+                <Label>Email</Label>
+                <Input type="email" id="email" name="email" value={formData.email} onChange={handleChange} required placeholder="name@example.com" />
+            </div>
+            <div className="space-y-2">
+                <Label>Password</Label>
+                <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" />
+            </div>
+            {/* <div className="space-y-2">
+              <Button>Save</Button>
+            </div> */}
+        </div>
         {/* <form>
           <div className="mb-3">
             <label>Full Name</label>
