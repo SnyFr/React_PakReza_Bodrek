@@ -1,24 +1,24 @@
 import pool from "../config/db.js";
-const USERS = [
-  {
-    id: 1,
-    name: "Gilss",
-    email: "agil@gmail.com",
-    password: "12345678",
-  },
-  {
-    id: 2,
-    name: "Romi",
-    email: "romi@gmail.com",
-    password: "12345678",
-  },
-  {
-    id: 3,
-    name: "Poki",
-    email: "poki@gmail.com",
-    password: "12345678",
-  },
-]
+// const USERS = [
+//   {
+//     id: 1,
+//     name: "Gilss",
+//     email: "agil@gmail.com",
+//     password: "12345678",
+//   },
+//   {
+//     id: 2,
+//     name: "Romi",
+//     email: "romi@gmail.com",
+//     password: "12345678",
+//   },
+//   {
+//     id: 3,
+//     name: "Poki",
+//     email: "poki@gmail.com",
+//     password: "12345678",
+//   },
+// ]
 
 //CRUD (CREATE, READ, UPDATE, DELETE)
 
@@ -45,8 +45,10 @@ export const getUserById = async(req, res) => {
 
   const id = parseInt(req.params.id);
   try {
-    const user = await pool.query("SELECT id, name, email, is_active FROM users WHERE id= ?", [id])
-    if(!user) {
+    const [user] = await pool.query("SELECT id, name, email, is_active FROM users WHERE id= ", [id]);
+
+    const rows = user[0];
+    if(!rows) {
       res.status(404).json({
         status: false,
         message: "User Not Found",
@@ -136,18 +138,19 @@ export const deleteUser = async(req, res) => {
   const id = parseInt(req.params.id);
   // const userIndex = USERS.find((u) => u.id === id);
   try {
+    // const user untuk memanggil data yang akan di delete, tetapi tidak perlu juga gapapa
     const [user] = await pool.query("DELETE FROM users WHERE id=?", [id])
-    if(user === -1) {
+    if(user.affectedRows === 0) {
       return res.status(404).json({
         status: false,
         message: "user not foundd!",
       })
     }
-    const deletedUser = USERS.splice(user, 1)[0];
+    // const deletedUser = USERS.splice(user, 1)[0];
     return res.status(200).json({
         status: true,
         message: "Delete Success!",
-        data: deletedUser
+        data: user
       })
   } catch (error) {
     return res.status(500).json({
