@@ -45,7 +45,7 @@ export const getUserById = async(req, res) => {
 
   const id = parseInt(req.params.id);
   try {
-    const [user] = await pool.query("SELECT id, name, email, is_active FROM users WHERE id= ", [id]);
+    const [user] = await pool.query("SELECT id, name, email, is_active FROM users WHERE id=?", [id]);
 
     const rows = user[0];
     if(!rows) {
@@ -106,13 +106,17 @@ export const createUser = async(req, res) => {
 //update
 export const updateUser = async(req, res) => {
   const id = parseInt(req.params.id);
-  const {name, email, password} = req.body;
+  const {name, email, password, is_active} = req.body;
+
   try {
-    const [user] = await pool.query("UPDATE users SET name=?, email=?, password=? WHERE id=?", [name, email, password, id])
+    if (!password) {
+      await pool.query("UPDATE users SET name=?, email=?, is_active=? WHERE id=?", [name, email, is_active, id])
+    }else {
+      await pool.query("UPDATE users SET name=?, email=?, password=?, is_active=? WHERE id=?", [name, email, password, is_active, id])
+    }
     return res.status(200).json({
       status: true,
-      message: "Update Success!",
-      data: user
+      message: "Update Success!"
     })
   } catch (error) {
     return res.status(500).json({

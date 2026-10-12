@@ -10,30 +10,32 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AppModal from "../../components/AppModal";
 
+import api from "@/services/api";
 
-const dataUsers = [
-  {
-    id: 1,
-    name: "Gibran",
-    email: "gibran@gmail.com",
-    password: "NEGARAgaji",
-  },
-  {
-    id: 2,
-    name: "Rocky",
-    email: "rocky@gmail.com",
-    password: "NEGARAgaji",
-  },
-  {
-    id: 3,
-    name: "Joko",
-    email: "gibran@gmail.com",
-    password: "NEGARAgaji",
-  },
-]
+
+// const dataUsers = [
+//   {
+//     id: 1,
+//     name: "Gibran",
+//     email: "gibran@gmail.com",
+//     password: "NEGARAgaji",
+//   },
+//   {
+//     id: 2,
+//     name: "Rocky",
+//     email: "rocky@gmail.com",
+//     password: "NEGARAgaji",
+//   },
+//   {
+//     id: 3,
+//     name: "Joko",
+//     email: "gibran@gmail.com",
+//     password: "NEGARAgaji",
+//   },
+// ]
 
 export default function ListUser() {
   const _initForm = {
@@ -41,12 +43,24 @@ export default function ListUser() {
     name: "",
     email: "",
     password: "",
-    status: "Active",
+    is_active: 1,
   }
   const [showModal, setShowModal] = useState(false);
-  const [users, setUsers] = useState(dataUsers);
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState(_initForm);
   const [isEdit, setIsEdit] = useState(false);
+  const fetchUser = async() => {
+    try {
+      const response = await api.get("/user")
+      setUsers(response.data.data)
+    } catch (error) {
+      console.log(error.message);
+    }
+  }
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
   
   function handleOpenModal() {
     setShowModal(true);
@@ -57,8 +71,13 @@ export default function ListUser() {
   function handleEditModal(user) {
     setShowModal(true);
     setIsEdit(true);
-    setFormData(user);
-
+    setFormData({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      password: "",
+      is_active: user.is_active
+    });
   }
 
   function handleCloseModal() {
@@ -66,34 +85,52 @@ export default function ListUser() {
   }
 
   function handleChange(e) {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+    }));
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isEdit) {
-      setUsers(users.map((user) => (user.id === formData.id ? formData: user)));
-    }else {
-      const newUser = {
-          id: Date.now(),
-          ...formData,
+    try {
+      const payload = {
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        is_active: parseInt(formData.is_active),
       }
-      setUsers([...users, newUser]);
+      if (isEdit) {
+        console.log("Data yang dikirim ke backend:", formData);
+        await api.put(`/user/${formData.id}`, payload);
+        // setUsers(users.map((user) => (user.id === formData.id ? formData: user)));
+      }else {
+        await api.post("/user", payload);
+        // const newUser = {
+        //     id: Date.now(),
+        //     ...formData,
+        // }
+        // setUsers([...users, newUser]);
+      }
+      fetchUser();
       setFormData(_initForm);
+    } catch (error) {
+      const errMsg = error.message
+      console.log("Error submit form:", errMsg);
+    } finally {
+      handleCloseModal();
     }
-
-    handleCloseModal();
   }
 
-  function handleDelete(id) {
+  async function handleDelete (id) {
     const confirm = window.confirm(`Are you sure want to delete this data?`);
     //filter: users
     if (confirm) {
-      setUsers(users.filter((u) => u.id !== id));
+      await api.delete(`/user/${id}`);
+      fetchUser();
+      // setUsers(users.filter((u) => u.id !== id));
       // console.log(confirm)
     }
   }
@@ -126,7 +163,12 @@ export default function ListUser() {
                   <td className="px-6 py-6 whitespace-nowrap">{index + 1}</td>
                   <td className="px-6">{user.name}</td>
                   <td>{user.email}</td>
-                  <td className="px-6">Active</td>
+                  <td className="px-6">
+                    <span className={`px-3 py-1 text-sm font-semibold rounded-xl border ${
+                      user.is_active === 1 ? "border-emerald-500 text-emerald-600" : "border-rose-500 text-rose-600"}`}>
+                      {user.is_active === 1 ? "Active" : "Inactive"}
+                    </span>
+                  </td>
                   <td className="px-6 py-6 whitespace-nowrap">
                     <Button
                       onClick={() => handleEditModal(user)}
@@ -231,8 +273,24 @@ export default function ListUser() {
             </div>
             <div className="space-y-2">
                 <Label>Password</Label>
-                <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange} required placeholder="Enter your password" />
+                <Input type="password" id="password" name="password" value={formData.password} onChange={handleChange}  required={isEdit ? false : true} placeholder="Enter your password" />
             </div>
+
+            {isEdit ? (
+            <div className="space-y-2">
+              <Label htmlFor="is_active">Status</Label>
+              <select
+                id="is_active"
+                name="is_active"
+                value={formData.is_active ?? 1}
+                onChange={handleChange}
+                required
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <option value={1}>Active</option>
+                <option value={0}>Inactive</option>
+              </select>
+            </div>
+            ) : ("")}
             {/* <div className="space-y-2">
               <Button>Save</Button>
             </div> */}

@@ -77,9 +77,9 @@ export const createProd = async(req, res) => {
 
 export const updateProd = async(req, res) => {
   const id = parseInt(req.params.id);
-  const {category_id, name, price, stock, description} = req.body;
+  const {category_id, name, price, stock, description, is_active} = req.body;
   try {
-    const [user] = await pool.query("UPDATE product SET category_id=?, name=?, price=?, stock=?, description=? WHERE id=?", [category_id, name, price, stock, description, id])
+    const [user] = await pool.query("UPDATE product SET category_id=?, name=?, price=?, stock=?, description=?, is_active=? WHERE id=?", [category_id, name, price, stock, description, is_active ?? 1, id])
     return res.status(200).json({
       status: true,
       message: "Update Success!",
