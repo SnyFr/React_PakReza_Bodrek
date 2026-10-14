@@ -1,9 +1,24 @@
-import { Outlet } from "react-router-dom";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { Outlet, useNavigate } from "react-router-dom";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/AppSidebar";
+import { useEffect } from "react";
 
 export default function MainLayout() {
+  // const navigate = useNavigate();
+  // const token = localStorage.getItem("token");
+
+  // useEffect(() => {
+  //   if (!token) {
+  //     navigate("/login");
+  //     return;
+  //   }
+  // }, [token]);
+
   return (
     <SidebarProvider>
       {/* Sidebar Navigasi */}
@@ -15,7 +30,9 @@ export default function MainLayout() {
         <header className="flex h-14 shrink-0 items-center gap-2 shadow-md bg-background px-4">
           <SidebarTrigger className="-ml-1" />
           <Separator orientation="vertical" className="mr-2 h-4" />
-          <span className="text-sm font-medium text-muted-foreground">Dashboard</span>
+          <span className="text-sm font-medium text-muted-foreground">
+            Dashboard
+          </span>
         </header>
 
         {/* Konten Halaman */}

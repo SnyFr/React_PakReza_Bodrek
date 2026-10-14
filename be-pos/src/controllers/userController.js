@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+
 // const USERS = [
 //   {
 //     id: 1,

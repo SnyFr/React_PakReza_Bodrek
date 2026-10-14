@@ -4,11 +4,11 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 
 // Menu navigasi utama
 const items = [
-  { title: "Home", url: "#", icon: Home },
-  { title: "Inbox", url: "#", icon: Inbox },
+  { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Users", url: "/user", icon: Inbox },
   { title: "Calendar", url: "#", icon: Calendar },
   { title: "Search", url: "#", icon: Search },
-  { title: "Settings", url: "#", icon: Settings },
+  { title: "Logout", url: "#", icon: Settings }, 
 ];
 
 export function AppSidebar() {
