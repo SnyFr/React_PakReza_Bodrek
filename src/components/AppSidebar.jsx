@@ -6,7 +6,7 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 const items = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Users", url: "/user", icon: Inbox },
-  { title: "Calendar", url: "#", icon: Calendar },
+  { title: "Transactions", url: "/transactions", icon: Calendar },
   { title: "Search", url: "#", icon: Search },
   { title: "Logout", url: "#", icon: Settings }, 
 ];
