@@ -7,6 +7,8 @@ const items = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Users", url: "/user", icon: Inbox },
   { title: "Transactions", url: "/transactions", icon: Calendar },
+  { title: "Category", url: "/category", icon: Calendar },
+  { title: "Product", url: "/product", icon: Calendar },
   { title: "Search", url: "#", icon: Search },
   { title: "Logout", url: "#", icon: Settings }, 
 ];
@@ -50,7 +52,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton tooltip="John Doe">
               <User2 />
-              <span className="font-medium">John Doe</span>
+              <span className="font-medium">Agil Feriski</span>
               <ChevronUp className="ml-auto" />
             </SidebarMenuButton>
           </SidebarMenuItem>

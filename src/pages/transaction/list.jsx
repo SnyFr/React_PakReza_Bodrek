@@ -1,9 +1,7 @@
-// import { Card, Form, Button, Table, Modal } from "react-bootstrap";
+
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -15,27 +13,6 @@ import AppModal from "../../components/AppModal";
 
 import api from "@/services/api";
 
-
-// const dataUsers = [
-//   {
-//     id: 1,
-//     name: "Gibran",
-//     email: "gibran@gmail.com",
-//     password: "NEGARAgaji",
-//   },
-//   {
-//     id: 2,
-//     name: "Rocky",
-//     email: "rocky@gmail.com",
-//     password: "NEGARAgaji",
-//   },
-//   {
-//     id: 3,
-//     name: "Joko",
-//     email: "gibran@gmail.com",
-//     password: "NEGARAgaji",
-//   },
-// ]
 
 export default function ListTransaction() {
   const _initForm = {
@@ -49,7 +26,8 @@ export default function ListTransaction() {
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState(_initForm);
   const [isEdit, setIsEdit] = useState(false);
-  const fetchUser = async() => {
+
+  const fetchTransactions = async() => {
     try {
       const response = await api.get("/transactions")
       setUsers(response.data)
@@ -59,7 +37,7 @@ export default function ListTransaction() {
   }
 
   useEffect(() => {
-    fetchUser();
+    fetchTransactions();
   }, []);
   
   function handleOpenModal() {
@@ -114,7 +92,7 @@ export default function ListTransaction() {
         // }
         // setUsers([...users, newUser]);
       }
-      fetchUser();
+      fetchTransactions();
       setFormData(_initForm);
     } catch (error) {
       const errMsg = error.message
@@ -129,7 +107,7 @@ export default function ListTransaction() {
     //filter: users
     if (confirm) {
       await api.delete(`/user/${id}`);
-      fetchUser();
+      fetchTransactions();
       // setUsers(users.filter((u) => u.id !== id));
       // console.log(confirm)
     }

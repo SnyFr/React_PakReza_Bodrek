@@ -6,7 +6,14 @@ export const createTransaction = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    const { user_id, payment_method, items } = req.body;
+    const { user_id, payment_method, items, pay = 0 } = req.body;
+    const userId = req.user?.id;
+
+    // const isMidTrans = payment_method === "1" || payment_method === "midtrans"
+    
+    let change = 0;
+    let cashReceive = 0;
+    let status = "pending";
 
     if (!user_id || payment_method === undefined || !items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ success: false, message: 'Data request tidak valid.' });
@@ -54,13 +61,15 @@ export const createTransaction = async (req, res) => {
     const total = subtotal + tax;
 
     // Format order_number
-    const order_number = `TRX-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const orderNumber = await generateOrderNumber(connection);
+    console.log(req.user)
+    console.log("order number :", orderNumber)
 
     // B. Insert ke tabel orders (payment_method disimpan angka 1 / 2)
     const [orderResult] = await connection.query(
       `INSERT INTO orders (order_number, user_id, payment_method, subtotal, tax, total, status)
        VALUES (?, ?, ?, ?, ?, ?, 'pending')`,
-      [order_number, user_id, payment_method, subtotal, tax, total]
+      [orderNumber, user_id, payment_method, subtotal, tax, total]
     );
 
     const orderId = orderResult.insertId;
@@ -75,7 +84,7 @@ export const createTransaction = async (req, res) => {
     }
 
     // D. Ambil User untuk Midtrans Customer Details
-    const [userRows] = await connection.query('SELECT name, email FROM users WHERE id = ?', [user_id]);
+    const [userRows] = await connection.query('SELECT name, email FROM users WHERE id = ?', [userId]);
     const user = userRows[0] || { name: 'Customer', email: 'customer@example.com' };
 
     let snapToken = null;
@@ -85,7 +94,7 @@ export const createTransaction = async (req, res) => {
     if (Number(payment_method) === 1) {
       const parameter = {
         transaction_details: {
-          order_id: order_number,
+          order_id: orderNumber,
           gross_amount: total
         },
         item_details: [
@@ -111,7 +120,18 @@ export const createTransaction = async (req, res) => {
       );
     } else if (Number(payment_method) === 2) {
       // Jika Cash / Tunai, status langsung settlement / dikelola manual di kasir
-      await connection.query(`UPDATE orders SET status = 'settlement' WHERE id = ?`, [orderId]);
+      await connection.query(`UPDATE orders SET status = 'settlement' WHERE id = ?`, [orderId]); 
+      cashReceive = Number(pay)
+      if(cashReceive < Number(total)) {
+        await connection.rollback()
+        return res.status(400).json({
+          status: false,
+          message: "The cash is less than the total..",
+        })
+      }
+      change = cashReceive - Number(total);
+      status = "settlement";
+
     }
 
     await connection.commit();
@@ -121,13 +141,18 @@ export const createTransaction = async (req, res) => {
       message: 'Transaksi berhasil dibuat',
       data: {
         order_id: orderId,
-        order_number,
+        orderNumber,
         user_id,
         payment_method,
         subtotal,
-        tax,
         total,
-        status: Number(payment_method) === 1 ? 'settlement' : 'pending',
+        tax,
+        status: Number(payment_method) === 1 ? 'Order berhasil, silahkan bayar dengan gopay' : 'payment cash berhasil',
+        payment_details: payment_method === 2 ? 
+        {
+          cashReceive: cashReceive,
+          change: change,
+        } : null,
         snap_token: snapToken,
         snap_redirect_url: snapRedirectUrl
       }
@@ -158,3 +183,26 @@ export const getAllTransaction = async (req, res) => {
     return res.status(500).json({ success: false, message: error.message });
   }
 };
+
+const generateOrderNumber = async(connection) => {
+
+  //TR-19102026-001
+  const now = new Date();
+  const year = now.getFullYear()
+  const month = now.getMonth()
+  const date = now.getDate()
+  const prefix = `TR-${year}${month}${date}-`
+
+  //query buat manggil connection
+  const [lastOrder] = await connection.query("SELECT order_number FROM orders WHERE order_number LIKE ? ORDER BY id DESC LIMIT 1 FOR UPDATE", [`${prefix}`]);
+
+  let nextNumber = 1;
+  if(lastOrder.length > 0) {
+    const lastNumber = lastOrder[0].order_number;
+    const currentNumber = parseInt(lastNumber.split("-")[2], 10)
+    if(!isNaN(currentNumber)) {
+      nextNumber = currentNumber + 1;
+    }
+  }
+  return `${prefix}${String(nextNumber).padStart(4, "0")}`
+}

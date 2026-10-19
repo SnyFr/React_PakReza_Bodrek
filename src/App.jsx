@@ -100,7 +100,8 @@ return (
       <Route element={<MainLayout/>}>
         <Route path="/dashboard" element={<Dashboard />}></Route>
         <Route path="/user" element={<ListUser />}></Route>
-        <Route path="/categories" element={<CategoryPage />}></Route>
+        <Route path="/category" element={<CategoryPage />}></Route>
+        
         <Route path="/product" element={<ProductsPage />}></Route>
         <Route path="/transactions" element={<ListTransaction />}></Route>
       </Route>
