@@ -14,7 +14,7 @@ import { Button } from "./ui/button"
 
 export default function AppModal({show, onClose, size="md", title, children, onSubmit, submitLabel = 'Save', cancelLabel = 'Cancel', isLoading= false, showFooter=true}) {
   return (
-    <Dialog open={show} openChange={onClose}>
+    <Dialog open={show} onOpenChange={onClose}>
     <DialogContent className="sm:max-w [540px]">
       <DialogHeader>
         <DialogTitle>{title}</DialogTitle>

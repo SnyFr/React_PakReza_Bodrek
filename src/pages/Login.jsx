@@ -13,11 +13,12 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert";
-import { AlertCircleIcon, CheckCircle2Icon } from "lucide-react"
+import { AlertCircleIcon } from "lucide-react"
 import { Coffee, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import api from "@/services/api.js";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -48,24 +49,15 @@ export default function Login() {
     setIsLoading(true); //loading
     setSuccessMsg("");
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-      const result = await res.json();
-      if (!res.ok) {
-        throw new Error(result.message || "Please check your email and password");
-      }
-      setSuccessMsg(result.message);
-      localStorage.setItem("token", result.data.token);
+      const res = await api.post("auth/login", formData);
+      console.log(res)
+
+      setSuccessMsg(res.message);
+      localStorage.setItem("token", res.data.token);
       setTimeout(() => {
         // alert("Duarrr Nmek");
         navigate("/dashboard");
-      }, 2000);
+      }, 1000);
     } catch (error) {
       setErrorMsg(error.message);
       console.log(error.message);

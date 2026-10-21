@@ -14,6 +14,9 @@ import MainLayout from './pages/MainLayout';
 import ListUser from './pages/user/list';
 import CategoryPage from './pages/category page/category';
 import ProductsPage from './pages/product page/product';
+import ListTransaction from './pages/transaction/list'
+import FormTransaction from './pages/transaction/Form';
+import PrintTransaction from './pages/transaction/Print';
 
 
 function App() {
@@ -99,8 +102,12 @@ return (
       <Route element={<MainLayout/>}>
         <Route path="/dashboard" element={<Dashboard />}></Route>
         <Route path="/user" element={<ListUser />}></Route>
-        <Route path="/categories" element={<CategoryPage />}></Route>
+        <Route path="/category" element={<CategoryPage />}></Route>
+        
         <Route path="/product" element={<ProductsPage />}></Route>
+        <Route path="/transactions" element={<ListTransaction />}></Route>
+        <Route path="/transactions/create" element={<FormTransaction />}></Route>
+        <Route path="/transactions/print" element={<PrintTransaction />}></Route>
       </Route>
     </Routes>
   </BrowserRouter>
