@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AppModal from "../../components/AppModal";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 import api from "@/services/api";
 
 
 export default function ListTransaction() {
+  const navigate = useNavigate()
   const _initForm = {
     id: null,
     name: "",
@@ -26,36 +29,30 @@ export default function ListTransaction() {
   const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState(_initForm);
   const [isEdit, setIsEdit] = useState(false);
-
-  const fetchTransactions = async() => {
+  const [transactions, setTransactions] = useState([])
+  const fetchTransaction = async() => {
     try {
       const response = await api.get("/transactions")
-      setUsers(response.data)
+      setTransactions(response.data || [])
     } catch (error) {
       console.log(error.message);
     }
   }
 
   useEffect(() => {
-    fetchTransactions();
+    fetchTransaction();
   }, []);
-  
+  console.log(transactions)
   function handleOpenModal() {
     setShowModal(true);
     setFormData(_initForm);
     setIsEdit(false);
   }
 
-  function handleEditModal(user) {
+  function handleEditModal(transaction) {
     setShowModal(true);
     setIsEdit(true);
-    setFormData({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      password: "",
-      is_active: user.is_active
-    });
+    setFormData(transaction);
   }
 
   function handleCloseModal() {
@@ -92,12 +89,12 @@ export default function ListTransaction() {
         // }
         // setUsers([...users, newUser]);
       }
-      fetchTransactions();
       setFormData(_initForm);
     } catch (error) {
       const errMsg = error.message
       console.log("Error submit form:", errMsg);
     } finally {
+      fetchTransaction();
       handleCloseModal();
     }
   }
@@ -107,7 +104,7 @@ export default function ListTransaction() {
     //filter: users
     if (confirm) {
       await api.delete(`/user/${id}`);
-      fetchTransactions();
+      fetchTransaction();
       // setUsers(users.filter((u) => u.id !== id));
       // console.log(confirm)
     }
@@ -115,126 +112,70 @@ export default function ListTransaction() {
 
   return (
     <>
-      <Card className="shadow-sm border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 p-6">
+      <Card className="shadow-sm border-border p-6">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
           <div>
-            <CardTitle className="text-xl font-bold">Transaction History</CardTitle>
+            <CardTitle className="text-xl font-bold">Data Transaction</CardTitle>
           </div>
-            <Button onClick={handleOpenModal}>
-              Create New Transaction
-            </Button>
+            <Button onClick={() => navigate("/transactions/create")}>Create New Transaction</Button>
         </CardHeader>
+
         <CardContent className="p-0">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <div>
+              <h4 className="mb-0 fw-bold">Data Transaction</h4>
+            </div>
+          </div>
           <table className="w-full text-left text-sm">
             <thead className="border-y bg-muted/30 text-xs uppercase text-muted-foreground">
               <tr>
                 <th className="px-6 py-3 me font-medium">#</th>
                 <th className="px-6 py-3 me font-medium">Order Number</th>
                 <th className="px-6 py-3 me font-medium">Payment Method</th>
-                <th className="px-6 py-3 me font-medium">Items</th>
+                <th className="px-6 py-3 me font-medium">Products</th>
                 <th className="px-6 py-3 me font-medium">Action</th>
               </tr>
             </thead>
+
             <tbody className="divide-y divide-border">
-              {users.map((user, index) => (
-                <tr key={index} className="hover:bg-muted/50 transition-colors">
-                  <td className="px-6 py-6 whitespace-nowrap">{index + 1}</td>
-                  <td className="px-6">{user.order_number}</td>
-                  {/* <td>
-                    {user.items.map((item) => (
-                      <ul>
-                      <li>{item.name}</li>
-                      </ul>
+              {transactions.length > 0 ? (
+                transactions.map((transaction, index) => (
+                  <tr key={index} className="hover:bg-muted/50 transition-colors">
+                    <td className="px-4 py-6 whitespace-nowrap">{index + 1}</td>
+                    <td>{transaction.order_number}</td>
+                    <td>{transaction.payment_method === 1 ? "Gopay" : "Cash"}</td>
+                    <td>
+                      {transaction.items.map((item) => (
+                        <ul>
+                          <li>{item.name}</li>
+                        </ul>
                       ))}
-                      </td> */}
-                  <td className="px-6">{user.payment_method === 1 ? "Gopay" : "COD" }</td>
-                      <td className="px-6">{user.product_id}</td>
-                  <td className="px-6 py-6 whitespace-nowrap">
-                    <Button
-                      onClick={() => handleEditModal(user)}
-                      variant="secondary"
-                      size="sm"
-                      className="me-2 rounded-lg"
-                    >
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => handleDelete(user.id)}
-                      variant="destructive"
-                      size="sm"
-                      className="me-2 rounded-lg"
-                    >
-                      Delete
-                    </Button>
+                    </td>
+                    {/* <td>
+                      <span className={`border rounded-sm p-2 ${user.is_active === 1 ? "bg-green-600" : "bg-red-600"}   text-white`}>{user.is_active === 1 ? "Active" : "In-Active"}</span>
+                    </td> */}
+                    <td className="px-4 py-6 whitespace-nowrap">
+                      <Button onClick={() => handleEditModal(transaction)} size="sm" className="me-2 bg-green-600">
+                        Edit
+                      </Button>
+                      <Button onClick={() => handleDelete(transaction.id)} variant="destructive" size="sm" className="me-2">
+                        Delete
+                      </Button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={5} className="text-center py-4 text-muted">
+                    Belum ada data user
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </CardContent>
       </Card>
 
-      {/* <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Create Data User</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Full Name</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Enter full name"
-                name="name"
-                required
-                value={formData.name}
-                onChange={handleChange}
-              ></Form.Control>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Email Address</Form.Label>
-              <Form.Control
-                type="email"
-                placeholder="Enter email address"
-                name="email"
-                required
-                value={formData.email}
-                onChange={handleChange}
-              ></Form.Control>
-            </Form.Group>
-
-            <Form.Group className="mb-3">
-              <Form.Label>Password</Form.Label>
-              <Form.Control
-                type="password"
-                placeholder="Enter password"
-                name="password"
-                required
-                value={formData.password}
-                onChange={handleChange}
-              ></Form.Control>
-            </Form.Group>
-
-            {/* <Form.Group className="mb-3">
-              <Form.Label>Status</Form.Label>
-              <Form.Select
-                name="status">
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </Form.Select>
-            </Form.Group> */}
-          {/* </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Close
-          </Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            Save Changes
-          </Button>
-        </Modal.Footer>
-      </Modal> */} 
       <AppModal
         show={showModal}
         onClose={handleCloseModal}
@@ -271,47 +212,7 @@ export default function ListTransaction() {
               </select>
             </div>
             ) : ("")}
-            {/* <div className="space-y-2">
-              <Button>Save</Button>
-            </div> */}
         </div>
-        {/* <form>
-          <div className="mb-3">
-            <label>Full Name</label>
-            <input
-              type="text"
-              placeholder="Enter full name"
-              name="name"
-              required
-              value={formData.name}
-              onChange={handleChange}
-            ></input>
-          </div>
-
-          <div className="mb-3">
-            <label>Email Address</label>
-            <input
-              type="email"
-              placeholder="Enter email address"
-              name="email"
-              required
-              value={formData.email}
-              onChange={handleChange}
-            ></input>
-          </div>
-
-          <div className="mb-3">
-            <label>Password</label>
-            <input
-              type="password"
-              placeholder="Enter password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-            ></input>
-          </div>
-        </form> */}
       </AppModal>
     </>
   );

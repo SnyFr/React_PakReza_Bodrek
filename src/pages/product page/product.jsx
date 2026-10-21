@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader,CardDescription, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import AppModal from "../../components/AppModal";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -14,27 +15,39 @@ import {
 import api from "@/services/api";
 
 export default function ProductsPage() {
+
+  const STATUS_MAP = {
+    1: {
+      label: "Active",
+      badge: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      dot: "bg-emerald-500",
+    }, 
+    0: {
+      label: "In-Active",
+      badge: "bg-rose-50 text-rose-700 border-rose-200",
+      dot: "bg-rose-500",
+    }
+  }
   const _initForm = {
     id: null,
+    category_id: "",
     name: "",
-    categoryId: "",
-    stock: "",
     price: "",
+    stock: "",
     description: "",
     is_active: 1,
   };
-
+  
+  const [showModal, setShowModal] = useState(false);
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState(_initForm);
   const [isEdit, setIsEdit] = useState(false);
 
   const fetchProducts = async () => {
     try {
       const response = await api.get("/product");
-      const data = Array.isArray(response) ? response : (response?.data || []);
-      setProducts(Array.isArray(data) ? data : []);
+      setProducts(response.data);
     } catch (error) {
       console.log(error.message);
     }
@@ -43,8 +56,7 @@ export default function ProductsPage() {
   const fetchCategories = async () => {
     try {
       const response = await api.get("/category");
-      const data = Array.isArray(response) ? response : (response?.data || []);
-      setCategories(Array.isArray(data) ? data : []);
+      setCategories(response.data);
     } catch (error) {
       console.log(error.message);
     }
@@ -56,21 +68,13 @@ export default function ProductsPage() {
   }, []);
 
   function handleOpenCreate() {
+    setShowModal(true);
     setFormData(_initForm);
     setIsEdit(false);
-    setShowModal(true);
   }
 
-  function handleOpenEdit(product) {
-    setFormData({
-      id: product.id,
-      name: product.name || "",
-      categoryId: String(product.category_id || ""),
-      stock: product.stock ?? "",
-      price: product.price || "",
-      description: product.description || "",
-      is_active: product.is_active !== undefined ? product.is_active : (product.status === "Active" ? 1 : 0),
-    });
+  function handleOpenEdit(user) {
+    setFormData(user);
     setIsEdit(true);
     setShowModal(true);
   }
@@ -80,7 +84,9 @@ export default function ProductsPage() {
   }
 
   function handleChange(e) {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    setFormData({ 
+      ...formData,
+      [e.target.name]: e.target.value });
   }
 
   async function handleSubmit(e) {
@@ -88,10 +94,10 @@ export default function ProductsPage() {
     try {
       const payload = {
         name: formData.name,
-        category_id: Number(formData.categoryId),
+        category_id: Number(formData.category_id),
         price: Number(formData.price),
-        stock: Number(formData.stock),
         description: formData.description,
+        stock: Number(formData.stock),
         is_active: parseInt(formData.is_active),
       };
 
@@ -123,76 +129,80 @@ export default function ProductsPage() {
 
   return (
     <>
-      <Card className="shadow-sm border-border p-6">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+      <Card className="border border-border/80 shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 px-6 py-5 border-b">
           <div>
-            <CardTitle className="text-xl font-bold">Data Products</CardTitle>
+            <CardTitle className="text-lg font-semibold tracking-tight"> Products</CardTitle>
+            <CardDescription className="text-xs text-muted-foreground mt-0.5">Manage your store inventory, categories, and stock status.</CardDescription>
           </div>
+
           <Button onClick={handleOpenCreate}>Create New Product</Button>
+          <Button onClick={handleOpenCreate} size="sm" className="font-medium">
+            + Add Product
+          </Button>
         </CardHeader>
+
         <CardContent className="p-0">
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-y bg-muted/30 text-xs uppercase text-muted-foreground">
               <tr>
-                <th className="px-6 py-3 font-medium">#</th>
-                <th className="px-6 py-3 font-medium">Name</th>
-                <th className="px-6 py-3 font-medium">Category</th>
-                <th className="px-6 py-3 font-medium">Stock</th>
-                <th className="px-6 py-3 font-medium">Price</th>
-                <th className="px-6 py-3 font-medium">Status</th>
-                <th className="px-6 py-3 font-medium text-center">Action</th>
+                <th className="px-5 py-3 w-12 text-center">#</th>
+                <th className="px-5 py-3">Product Name</th>
+                <th className="px-5 py-3">Category</th>
+                <th className="px-5 py-3 text-right">Price</th>
+                <th className="px-5 py-3 text-center">Stock</th>
+                <th className="px-5 py-3 text-center">Status</th>
+                <th className="px-5 py-3 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border">
-              {products.length > 0 ? (
-                products.map((row, index) => (
-                  <tr key={row.id || index} className="hover:bg-muted/50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">{index + 1}</td>
-                    <td className="px-6 py-4 font-medium">{row.name}</td>
-                    <td className="px-6 py-4">
-                      {row.cat_name || categories.find((c) => c.id === row.category_id)?.name || "-"}
-                    </td>
-                    <td className="px-6 py-4">{row.stock ?? 0}</td>
-                    <td className="px-6 py-4">Rp {Number(row.price || 0).toLocaleString("id-ID")}</td>
-                    <td className="px-6 py-4">
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold rounded-xl border ${
-                          row.is_active === 1 || row.status === "Active"
-                            ? "border-emerald-500 text-emerald-600 bg-emerald-50 dark:bg-emerald-950/20"
-                            : "border-rose-500 text-rose-600 bg-rose-50 dark:bg-rose-950/20"
-                        }`}
-                      >
-                        {row.is_active === 1 || row.status === "Active" ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-center whitespace-nowrap">
-                      <Button
-                        onClick={() => handleOpenEdit(row)}
-                        size="sm"
-                        className="me-2 rounded-xl bg-emerald-600 hover:bg-emerald-700"
-                      >
-                        Edit
-                      </Button>
-                      <Button
-                        onClick={() => handleDelete(row.id)}
-                        variant="destructive"
-                        size="sm"
-                        className="rounded-xl"
-                      >
-                        Delete
-                      </Button>
+            <tbody className="divide-y divide-border/60">
+                {products.length > 0 ? (
+                  products.map((row, index) => {
+                    const status = STATUS_MAP[row.is_active] ?? STATUS_MAP[0];
+
+                    return (
+                      <tr key={row.id ?? index} className="hover:bg-muted/40 transition-colors">
+                        <td className="px-5 py-3.5 text-center text-xs text-muted-foreground font-mono">{index + 1}</td>
+                        <td className="px-5 py-3.5 font-medium text-foreground">{row.name}</td>
+                        <td className="px-5 py-3.5 text-muted-foreground">{row.category_name || "-"}</td>
+                        <td className="px-5 py-3.5 text-right font-medium">
+                          {Number(row.price).toLocaleString("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            maximumFractionDigits: 0,
+                          })}
+                        </td>
+                        <td className="px-5 py-3.5 text-center text-muted-foreground">{row.stock}</td>
+                        <td className="px-5 py-3.5 text-center">
+                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${status.badge}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${status.dot}`} />
+                            {status.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                          <div className="inline-flex items-center gap-2">
+                            <Button onClick={() => handleOpenEdit(row)} variant="outline" size="sm" className="h-8 px-2.5 text-xs text-foreground hover:bg-accent rounded-lg">
+                              Edit
+                            </Button>
+                            <Button onClick={() => handleDelete(row.id)} variant="ghost" size="sm" className="h-8 px-2.5 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive rounded-lg">
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-muted-foreground text-sm">
+                      No products found. Click "+ Add Product" to create one.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan={7} className="text-center py-6 text-muted-foreground">
-                    Belum ada data Produk
-                  </td>
-                </tr>
-              )}
-            </tbody>
+                )}
+              </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 
@@ -201,23 +211,14 @@ export default function ProductsPage() {
         onClose={handleCloseModal}
         title={isEdit ? "Edit Product" : "Create New Product"}
         onSubmit={handleSubmit}
-        submitLabel={isEdit ? "Save Change" : "Save"}
+        submitLabel={isEdit ? "Save Changes" : "Create"}
       >
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Category</Label>
-            <Select
-              value={String(formData.categoryId || "")}
-              onValueChange={(val) => setFormData({ ...formData, categoryId: val })}
-              required
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select Category...">
-                  {(val) => {
-                    const selected = categories.find((c) => String(c.id) === String(val));
-                    return selected ? selected.name : "Select Category...";
-                  }}
-                </SelectValue>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="category">Category</Label>
+            <Select value={formData.category_id ? String(formData.category_id) : ""} onValueChange={(val) => setFormData((prev) => ({ ...prev, category_id: val }))} required>
+              <SelectTrigger id="category" className="w-full">
+                <SelectValue placeholder="Select a category" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -230,45 +231,30 @@ export default function ProductsPage() {
           </div>
 
           <div className="space-y-2">
-            <Label>Name</Label>
+            <Label htmlFor="name">Product Name</Label>
             <Input
               id="name"
               name="name"
               value={formData.name}
               onChange={handleChange}
               required
-              placeholder="Enter product name"
+              placeholder="e.g. Wireless Mouse"
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Price</Label>
-            <Input
-              type="number"
-              id="price"
-              name="price"
-              value={formData.price}
-              onChange={handleChange}
-              required
-              placeholder="Enter price"
-            />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="price">Price</Label>
+              <Input type="number" id="price" name="price" value={formData.price} onChange={handleChange} required placeholder="0" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="stock">Stock</Label>
+              <Input type="number" id="stock" name="stock" value={formData.stock} onChange={handleChange} placeholder="0" />
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <Label>Stock</Label>
-            <Input
-              type="number"
-              id="stock"
-              name="stock"
-              value={formData.stock}
-              onChange={handleChange}
-              required
-              placeholder="Enter stock"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Description</Label>
+          <div className="space-y-1.5">
+            <Label htmlFor="description">Description</Label>
             <Input
               type="text"
               name="description"
@@ -279,32 +265,25 @@ export default function ProductsPage() {
           </div>
 
           {isEdit && (
-            <div className="space-y-2">
+            <div className="space-y-2 pt-2 border-t">
               <Label>Status</Label>
-              <div className="flex gap-3 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, is_active: 1 })}
-                  className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-xl border transition-all cursor-pointer ${
-                    Number(formData.is_active) === 1
-                      ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
-                      : "bg-background text-muted-foreground border-input hover:bg-muted/50"
-                  }`}
-                >
+              <RadioGroup 
+                value={String(formData.is_active)} 
+                onValueChange={(val) => setFormData((prev) => ({ ...prev, is_active: parseInt(val, 10) }))} 
+                className="flex items-center gap-6">
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="1" id="active" />
+                <Label htmlFor="active" className="cursor-pointer font-normal">
                   Active
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormData({ ...formData, is_active: 0 })}
-                  className={`flex items-center justify-center px-4 py-2 text-sm font-medium rounded-xl border transition-all cursor-pointer ${
-                    Number(formData.is_active) === 0
-                      ? "bg-rose-600 text-white border-rose-600 shadow-sm"
-                      : "bg-background text-muted-foreground border-input hover:bg-muted/50"
-                  }`}
-                >
-                  Inactive
-                </button>
+                </Label>
               </div>
+              <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="0" id="inactive" />
+                  <Label htmlFor="inactive" className="cursor-pointer font-normal">
+                    In-Active
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
           )}
         </div>
