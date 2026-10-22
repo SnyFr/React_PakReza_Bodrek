@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import api from "@/services/api";
-import { CardBody } from "react-bootstrap";
 
 const PrintTransaction = () => {
 
@@ -13,9 +12,29 @@ const PrintTransaction = () => {
   const orderId = searchParams.get('order_id');
   const status = searchParams.get('transaction_status');
 
-  const [orders, setOrders] = useState([]);
-  const [Loadin, setLoading] = useState(true);
+  const [order, setOrder] = useState([]);
+  const [Loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    const fetchTransaction = async () => {
+      if (!orderId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await api.get(`/transactions/${orderId}`);
+        setOrder(res.data)
+
+      } catch (error) {
+        console.log("Fail Fetch data transaction", error.message)
+
+      }finally {
+        setLoading(false)
+      }
+    }
+    fetchTransaction()
+  },[orderId])
   const handlePrint = () => {
     window.print();
   }
@@ -25,7 +44,7 @@ const PrintTransaction = () => {
       <div className="max-w-md mx-auto my-6 space-y-4">
         <div className="flex items-center justify-between print:hidden">
           <Button variant="outline" onClick={() => navigate('/transactions')}>Back</Button>
-          <Button onClick={handlePrint} size="sm" className="bg-primary">Print Receipt</Button>
+          <Button onClick={handlePrint} size="sm" className="bg-primary rounded-xl">Print Receipt</Button>
         </div>
       </div>
       <Card className="border border-border/80 shadow-none font-mono text-xs p-6 bg-white text-black print:border-none">
@@ -45,34 +64,49 @@ const PrintTransaction = () => {
               </div>
               <div className="flex justify between items-center">
                 <span>Payment Method : </span>
-                <span className="uppercase">Qris</span>
+                <span className="uppercase">{order.payment_method}</span>
               </div>
             </div>
             <div className="border-t border-dashed border-zinc-400 pt-2 space-y-2">
-              <div className="flex justify-between items-center">
-                <div>
-                  <div className="font-semibold">Mi Sedap</div>
-                  <div className="text-[10px] text-zinc-600">
-                    1 x Rp.100.000
+              {order?.items?.length > 0 ? (
+                order.items.map((item, index) => (
+                <div key={index} className="flex justify-between items-center">
+                  <div>
+                    <div className="font-semibold">{item.name}</div>
+                    <div className="text-[10px] text-zinc-600">
+                      {item.qty} x {item.price.toLocaleString('id-ID')}
+                    </div>
+                  </div>
+                  <div className="font-medium">
+                    Rp. {(item.qty * item.price).toLocaleString('id-ID')}
                   </div>
                 </div>
-                <div className="font-medium">
-                  Rp.100.000
+                ))
+              ) : (
+                <div className="flex justify-between items-center">
+                  <span>Total Payment</span>
+                  <span>Rp. 100.000</span>
                 </div>
-              </div>
+              )}
               <div className="border-t border-dashed border-zinc-400 pt-2 space-y-1">
+                {order?.subtotal && (
                 <div className="flex justify-between">
                   <span>Subtotal</span>
-                  <span>Rp.100.000</span>
+                  <span>Rp. {order.subtotal.toLocaleString('id-ID')}</span>
                 </div>
-                <div className="flex justify-between">
+                )}
+                {order?.tax && (
+                  <div className="flex justify-between">
                   <span>Tax(10%)</span>
-                  <span>Rp.10.000</span>
+                  <span>Rp. {order.tax.toLocaleString('id-ID')}</span>
                 </div>
+                )}
+                {order?.total && (
                 <div className="flex justify-between">
                   <span>Total</span>
-                  <span>Rp.110.000</span>
+                  <span>Rp. {order.total.toLocaleString('id-ID')}</span>
                 </div>
+                )}
               </div>
             </div>
             <div className="border-t border-dashed border-zinc-400 pt-4 text-center space-y-1">

@@ -135,8 +135,7 @@ export default function ProductsPage() {
             <CardTitle className="text-lg font-semibold tracking-tight"> Products</CardTitle>
             <CardDescription className="text-xs text-muted-foreground mt-0.5">Manage your store inventory, categories, and stock status.</CardDescription>
           </div>
-
-          <Button onClick={handleOpenCreate}>Create New Product</Button>
+          {/* <Button onClick={handleOpenCreate}>Create New Product</Button> */}
           <Button onClick={handleOpenCreate} size="sm" className="font-medium">
             + Add Product
           </Button>

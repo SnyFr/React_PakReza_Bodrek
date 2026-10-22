@@ -10,7 +10,7 @@ export const createTransaction = async (req, res) => {
     const userId = req.body.user?.id;
 
     await connection.beginTransaction();
-    // const orderNumber = await generateOrderNumber(connection);
+    // const orderNumber = (await generateOrderNumber(connection)) || order_number;
     // console.log("order number", orderNumber);
     const isMidtrans = String(payment_method) === "1" || payment_method === "midtrans";
     let change = 0;
@@ -30,7 +30,8 @@ export const createTransaction = async (req, res) => {
       status = "settlement";
     }
 
-    const [transaction] = await pool.query("INSERT INTO orders (order_number, user_id, payment_method, subtotal, tax, total, pay, status) VALUES (?,?,?,?,?,?,?,?)", [
+    const [transaction] = await pool.query("INSERT INTO orders (order_number, user_id, payment_method, subtotal, tax, total, pay, status) VALUES (?,?,?,?,?,?,?,?)", 
+    [
       order_number,
       userId,
       payment_method,
@@ -142,12 +143,77 @@ export const getAllTransaction = async (req, res) => {
   }
 };
 
+export const getTransactionById = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const [rows] = await pool.query(`SELECT 
+        orders.id,
+        orders.order_number,
+        orders.payment_method,
+        orders.total,
+        orders.status,
+        orders.created_at,
+        order_details.product_id,
+        order_details.qty,
+        order_details.price, 
+        product.name 
+        FROM orders 
+        LEFT JOIN order_details ON orders.id = order_details.order_id 
+        LEFT JOIN product ON order_details.product_id = product.id 
+        WHERE orders.order_number = ?`,
+        [id]
+      );
+
+    if (rows.length === 0) {
+      return res.status(404).json({
+        status:false,
+        message: "Data Transaction not found"
+      })
+    }
+
+    const transaction = { 
+      id: rows[0].id,
+      order_number: rows[0].order_number,
+      user_id: rows[0].user_id,
+      payment_method: rows[0].payment_method,
+      subtotal: rows[0].subtotal,
+      total: rows[0].total,
+      tax: rows[0].tax,
+      pay: rows[0].pay,
+      status: rows[0].status,
+      items: []
+    }
+
+    rows.forEach((row) => { 
+      if (row.product_id) {
+        transaction.items.push({
+          product_id: row.product_id,
+          name: row.name,
+          qty: row.qty,
+          price: row.price
+        });
+      }
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: "Fetch data transaction success",
+      data: transaction,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: false,
+      message: error.message,
+    });
+  }
+}
+
 const generateOrderNumber = async (connection) => {
   // TR-19102026-001
   const now = new Date();
-  const year = now.getFullYear(); //26
-  const month = now.getMonth();
-  const date = now.getDate();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const date = String(now.getDate()).padStart(2, "0");
   const prefix = `TR-${year}${month}${date}-`;
 
   // query
@@ -167,3 +233,4 @@ const generateOrderNumber = async (connection) => {
 
   return `${prefix}${String(nextNumber).padStart(4, "0")}`; ///00010
 };
+

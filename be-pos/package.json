@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "npx nodemon server.js",
+    "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -17,6 +17,7 @@
     "cors": "^2.8.6",
     "dotenv": "^18.0.6",
     "express": "^5.2.1",
+    "joi": "^18.3.0",
     "jsonwebtoken": "^9.0.3",
     "midtrans-client": "^1.4.3",
     "mysql2": "^3.24.5"

@@ -5,13 +5,13 @@ import bcrypt from "bcrypt";
 import pool from "../config/db.js";
 
 //bikin data dummy
-const USERS = [
-  {
-    nama: "gilss",
-    email: "agil@gmail.com",
-    password: "12345678",
-  }
-]
+// const USERS = [
+//   {
+//     nama: "gilss",
+//     email: "agil@gmail.com",
+//     password: "12345678",
+//   }
+// ]
 
 export const login = async(req, res) => {
   const {email, password} = req.body; //cara ngambil lewat destruct
