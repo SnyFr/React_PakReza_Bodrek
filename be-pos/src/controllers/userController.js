@@ -1,4 +1,8 @@
 import pool from "../config/db.js";
+import prisma from "../config/prisma.js";
+import bcrypt from "bcrypt";
+
+
 
 // const USERS = [
 //   {
@@ -26,12 +30,24 @@ import pool from "../config/db.js";
 //read
 export const getAllUser = async(req, res) => {
   try {
-    const [rows] = await pool.query("SELECT id, name, email, is_active FROM users")
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        created_at: true,
+        updated_at: true,
+      },
+      orderBy: {
+        id: "desc"
+      },
+    })
+    //const [rows] = await pool.query("SELECT id, name, email, is_active FROM users")
     return res.status(200).json({
       status: true,
       message: "Fetch user success",
-      total: rows.length,
-      data: rows,
+      total: users.length,
+      data: users,
     });
   } catch (error) {
     return res.status(500).json({
@@ -46,15 +62,19 @@ export const getUserById = async(req, res) => {
 
   const id = parseInt(req.params.id);
   try {
-    const [user] = await pool.query("SELECT id, name, email, is_active FROM users WHERE id=?", [id]);
+    const user = await prisma.user.findUnique({
+      where: { id: id }
+    })
+    // const [user] = await pool.query("SELECT id, name, email, is_active FROM users WHERE id=?", [id]);
 
-    const rows = user[0];
-    if(!rows) {
-      res.status(404).json({
-        status: false,
-        message: "User Not Found",
-      });
-    }
+    // const rows = user[0];
+    // if(!rows) {
+    //   res.status(404).json({
+    //     status: false,
+    //     message: "User Not Found",
+    //   });
+    // }
+
     res.status(200).json({
         status: true,
         message: "User Found!",
@@ -73,11 +93,24 @@ export const getUserById = async(req, res) => {
 export const createUser = async(req, res) => {
   const {name, email, password} = req.body;
   try {
-    const [user] = await pool.query("INSERT INTO users(name, email, password) VALUES (?,?,?)", [name, email, password]);
+    const hashpassword = await bcrypt.hash(password, 10)
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        password: hashpassword,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+    })
+    // const [user] = await pool.query("INSERT INTO users(name, email, password) VALUES (?,?,?)", [name, email, password]);
       return res.status(201).json({
         status: true,
         message: "Create Success!",
-        data: {id: user.insertId, name, email},
+        data: user,
     });
   } catch (error) {
     return res.status(500).json({
@@ -110,14 +143,33 @@ export const updateUser = async(req, res) => {
   const {name, email, password, is_active} = req.body;
 
   try {
-    if (!password) {
-      await pool.query("UPDATE users SET name=?, email=?, is_active=? WHERE id=?", [name, email, is_active, id])
-    }else {
-      await pool.query("UPDATE users SET name=?, email=?, password=?, is_active=? WHERE id=?", [name, email, password, is_active, id])
-    }
+  const dataUpdate = {}
+  if(name) dataUpdate.name = name;
+  if(email) dataUpdate.email = email;
+  if(password) {
+    dataUpdate.password = await bcrypt.hash(password, 10);
+  } 
+    
+  const user = await prisma.user.update({
+    where: {id: id},
+    data: dataUpdate,
+    select : {
+      id: true,
+        name: true,
+        email: true,
+        created_at: true,
+        updated_at: true,
+      },
+    })
+    // if (!password) {
+    //   await pool.query("UPDATE users SET name=?, email=?, is_active=? WHERE id=?", [name, email, is_active, id])
+    // }else {
+    //   await pool.query("UPDATE users SET name=?, email=?, password=?, is_active=? WHERE id=?", [name, email, password, is_active, id])
+    // }
     return res.status(200).json({
       status: true,
-      message: "Update Success!"
+      message: "Update Success!",
+      data: user
     })
   } catch (error) {
     return res.status(500).json({
@@ -144,7 +196,10 @@ export const deleteUser = async(req, res) => {
   // const userIndex = USERS.find((u) => u.id === id);
   try {
     // const user untuk memanggil data yang akan di delete, tetapi tidak perlu juga gapapa
-    const [user] = await pool.query("DELETE FROM users WHERE id=?", [id])
+    const user = await prisma.user.delete({
+      where: { id: id },
+    })
+    // const [user] = await pool.query("DELETE FROM users WHERE id=?", [id])
     if(user.affectedRows === 0) {
       return res.status(404).json({
         status: false,
